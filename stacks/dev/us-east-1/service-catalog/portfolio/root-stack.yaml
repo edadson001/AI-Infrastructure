@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Dev Service Catalog portfolio stack.
+
+Parameters:
+  TemplateBaseUrl:
+    Type: String
+  PortfolioDisplayName:
+    Type: String
+  ProviderName:
+    Type: String
+  PortfolioDescription:
+    Type: String
+  OrganizationNodeType:
+    Type: String
+  OrganizationNodeValue:
+    Type: String
+  EnvironmentTagValue:
+    Type: String
+    Default: dev
+
+Resources:
+  PortfolioStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/service-catalog/portfolio.yaml'
+      Parameters:
+        PortfolioDisplayName: !Ref PortfolioDisplayName
+        ProviderName: !Ref ProviderName
+        PortfolioDescription: !Ref PortfolioDescription
+
+  PortfolioShareStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: PortfolioStack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/service-catalog/portfolio-share.yaml'
+      Parameters:
+        PortfolioId: !GetAtt PortfolioStack.Outputs.PortfolioId
+        OrganizationNodeType: !Ref OrganizationNodeType
+        OrganizationNodeValue: !Ref OrganizationNodeValue
+
+  TagOptionsStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: PortfolioStack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/service-catalog/tag-options.yaml'
+      Parameters:
+        PortfolioId: !GetAtt PortfolioStack.Outputs.PortfolioId
+        EnvironmentValue: !Ref EnvironmentTagValue
+
+Outputs:
+  PortfolioId:
+    Value: !GetAtt PortfolioStack.Outputs.PortfolioId

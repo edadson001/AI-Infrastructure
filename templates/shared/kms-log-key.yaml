@@ -1,0 +1,4 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Scaffold placeholder for ./templates/shared/kms-log-key.yaml
+
+Resources: {}

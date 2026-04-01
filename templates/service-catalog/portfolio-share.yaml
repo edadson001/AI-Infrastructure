@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Share a Service Catalog portfolio to an AWS Organizations node.
+
+Parameters:
+  PortfolioId:
+    Type: String
+  OrganizationNodeType:
+    Type: String
+    AllowedValues: [ORGANIZATIONAL_UNIT, ORGANIZATION, ACCOUNT]
+  OrganizationNodeValue:
+    Type: String
+
+Resources:
+  PortfolioShare:
+    Type: AWS::ServiceCatalog::PortfolioShare
+    Properties:
+      PortfolioId: !Ref PortfolioId
+      OrganizationNode:
+        Type: !Ref OrganizationNodeType
+        Value: !Ref OrganizationNodeValue
+      ShareTagOptions: true

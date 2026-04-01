@@ -1,0 +1,10 @@
+{
+  "NamePrefix": "dev-use1-app",
+  "SpokeVpcCidr": "10.11.0.0/16",
+  "AvailabilityZoneA": "us-east-1a",
+  "AvailabilityZoneB": "us-east-1b",
+  "PrivateSubnetACidr": "10.11.0.0/24",
+  "PrivateSubnetBCidr": "10.11.1.0/24",
+  "AttachmentSubnetACidr": "10.11.10.0/24",
+  "AttachmentSubnetBCidr": "10.11.11.0/24"
+}

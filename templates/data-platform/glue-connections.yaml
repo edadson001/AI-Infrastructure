@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Glue VPC connection for private data pipeline execution.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+  DataDomainName:
+    Type: String
+  ExistingVpcId:
+    Type: AWS::EC2::VPC::Id
+  PrivateSubnetIds:
+    Type: CommaDelimitedList
+  WorkloadSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+
+Resources:
+  GlueConnection:
+    Type: AWS::Glue::Connection
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      ConnectionInput:
+        Name: !Sub '${EnvironmentName}-${DataDomainName}-connection'
+        ConnectionType: NETWORK
+        PhysicalConnectionRequirements:
+          AvailabilityZone: !Select [0, !GetAZs '']
+          SubnetId: !Select [0, !Ref PrivateSubnetIds]
+          SecurityGroupIdList:
+            - !Ref WorkloadSecurityGroupId
+
+Outputs:
+  GlueConnectionName:
+    Value: !Ref GlueConnection

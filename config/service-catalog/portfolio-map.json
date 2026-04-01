@@ -1,0 +1,23 @@
+{
+  "dev": {
+    "us-east-1": {
+      "PortfolioName": "Dev Data Platform",
+      "ShareTargetType": "ORGANIZATIONAL_UNIT",
+      "ShareTargetValue": "ou-example-dev"
+    }
+  },
+  "test": {
+    "us-east-1": {
+      "PortfolioName": "Test Data Platform",
+      "ShareTargetType": "ORGANIZATIONAL_UNIT",
+      "ShareTargetValue": "ou-example-test"
+    }
+  },
+  "prod": {
+    "us-east-1": {
+      "PortfolioName": "Prod Data Platform",
+      "ShareTargetType": "ORGANIZATIONAL_UNIT",
+      "ShareTargetValue": "ou-example-prod"
+    }
+  }
+}

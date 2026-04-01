@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Runnable dev shared network foundation with logging, KMS, and baseline IAM exports.
+
+Parameters:
+  NamePrefix:
+    Type: String
+  LogRetentionDays:
+    Type: Number
+    Default: 30
+
+Resources:
+  LogsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      EnableKeyRotation: true
+      Description: !Sub 'KMS key for ${NamePrefix} network logs'
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:root'
+            Action: 'kms:*'
+            Resource: '*'
+
+  NetworkLogsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${NamePrefix}-network-logs-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !GetAtt LogsKey.Arn
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  NetworkLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/network/${NamePrefix}/shared'
+      RetentionInDays: !Ref LogRetentionDays
+      KmsKeyId: !GetAtt LogsKey.Arn
+
+  FlowLogsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: vpc-flow-logs.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: flowlogs-to-cloudwatch
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                Resource: !Sub '${NetworkLogGroup.Arn}:*'
+
+Outputs:
+  LogsKeyArn:
+    Value: !GetAtt LogsKey.Arn
+    Export:
+      Name: dev-us-east-1-LogsKeyArn
+  NetworkLogsBucketName:
+    Value: !Ref NetworkLogsBucket
+    Export:
+      Name: dev-us-east-1-NetworkLogsBucketName
+  SharedLogGroupName:
+    Value: !Ref NetworkLogGroup
+    Export:
+      Name: dev-us-east-1-SharedLogGroupName
+  FlowLogsRoleArn:
+    Value: !GetAtt FlowLogsRole.Arn
+    Export:
+      Name: dev-us-east-1-FlowLogsRoleArn

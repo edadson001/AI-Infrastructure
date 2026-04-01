@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Runnable dev regional observability stack for network and inspection services.
+
+Parameters:
+  NamePrefix:
+    Type: String
+  SharedLogGroupName:
+    Type: String
+  FlowLogsRoleArn:
+    Type: String
+  InspectionVpcId:
+    Type: String
+  TransitGatewayId:
+    Type: String
+
+Resources:
+  AlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${NamePrefix}-network-alerts'
+
+  InspectionVpcFlowLogs:
+    Type: AWS::EC2::FlowLog
+    Properties:
+      ResourceId: !Ref InspectionVpcId
+      ResourceType: VPC
+      TrafficType: ALL
+      LogDestinationType: cloud-watch-logs
+      LogGroupName: !Ref SharedLogGroupName
+      DeliverLogsPermissionArn: !Ref FlowLogsRoleArn
+
+  TgwFlowLogs:
+    Type: AWS::EC2::FlowLog
+    Properties:
+      ResourceId: !Ref TransitGatewayId
+      ResourceType: TransitGateway
+      TrafficType: ALL
+      LogDestinationType: cloud-watch-logs
+      LogGroupName: !Ref SharedLogGroupName
+      DeliverLogsPermissionArn: !Ref FlowLogsRoleArn
+
+  AlertsTopicAgeAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${NamePrefix}-network-alerts-health'
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 1
+      MetricName: NumberOfMessagesPublished
+      Namespace: AWS/SNS
+      Period: 300
+      Statistic: Sum
+      Threshold: 1000
+      Dimensions:
+        - Name: TopicName
+          Value: !GetAtt AlertsTopic.TopicName
+
+Outputs:
+  AlertsTopicArn:
+    Value: !Ref AlertsTopic
+    Export:
+      Name: dev-us-east-1-AlertsTopicArn
+  ObservabilityLogGroupName:
+    Value: !Ref SharedLogGroupName
+    Export:
+      Name: dev-us-east-1-ObservabilityLogGroupName

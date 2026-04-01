@@ -1,0 +1,7 @@
+{
+  "NamePrefix": "dev-use1-network",
+  "SharedLogGroupName": {"Fn::ImportValue":"dev-us-east-1-SharedLogGroupName"},
+  "FlowLogsRoleArn": {"Fn::ImportValue":"dev-us-east-1-FlowLogsRoleArn"},
+  "InspectionVpcId": {"Fn::ImportValue":"dev-us-east-1-InspectionVpcId"},
+  "TransitGatewayId": {"Fn::ImportValue":"dev-us-east-1-TransitGatewayId"}
+}

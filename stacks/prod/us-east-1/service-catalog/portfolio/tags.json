@@ -1,0 +1,5 @@
+[
+  {"Key":"Environment","Value":"prod"},
+  {"Key":"Region","Value":"us-east-1"},
+  {"Key":"Layer","Value":"service-catalog-portfolio"}
+]

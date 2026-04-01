@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Transit Gateway route tables for spoke and inspection traffic domains.
+
+Parameters:
+  TransitGatewayId:
+    Type: String
+  NamePrefix:
+    Type: String
+
+Resources:
+  SpokeRouteTable:
+    Type: AWS::EC2::TransitGatewayRouteTable
+    Properties:
+      TransitGatewayId: !Ref TransitGatewayId
+      Tags:
+        - Key: Name
+          Value: !Sub '${NamePrefix}-spoke-rt'
+
+  InspectionRouteTable:
+    Type: AWS::EC2::TransitGatewayRouteTable
+    Properties:
+      TransitGatewayId: !Ref TransitGatewayId
+      Tags:
+        - Key: Name
+          Value: !Sub '${NamePrefix}-inspection-rt'
+
+Outputs:
+  SpokeRouteTableId:
+    Value: !Ref SpokeRouteTable
+  InspectionRouteTableId:
+    Value: !Ref InspectionRouteTable

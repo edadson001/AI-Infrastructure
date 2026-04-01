@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM roles for Lambda and Glue in the data pipeline bundle.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+  DataDomainName:
+    Type: String
+  RawBucketName:
+    Type: String
+  CuratedBucketName:
+    Type: String
+  KmsKeyArn:
+    Type: String
+  LambdaLogGroupArn:
+    Type: String
+  GlueLogGroupArn:
+    Type: String
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-${DataDomainName}-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: lambda-pipeline-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub '${LambdaLogGroupArn}:*'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:s3:::${RawBucketName}'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${RawBucketName}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${CuratedBucketName}'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${CuratedBucketName}/*'
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:Encrypt
+                  - kms:GenerateDataKey
+                Resource: !Ref KmsKeyArn
+
+  GlueExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-${DataDomainName}-glue-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: glue-pipeline-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub '${GlueLogGroupArn}:*'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:s3:::${RawBucketName}'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${RawBucketName}/*'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${CuratedBucketName}'
+                  - !Sub 'arn:${AWS::Partition}:s3:::${CuratedBucketName}/*'
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:Encrypt
+                  - kms:GenerateDataKey
+                Resource: !Ref KmsKeyArn
+
+Outputs:
+  LambdaExecutionRoleArn:
+    Value: !GetAtt LambdaExecutionRole.Arn
+  GlueExecutionRoleArn:
+    Value: !GetAtt GlueExecutionRole.Arn

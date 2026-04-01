@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Guardrail prerequisite StackSet including a Service Catalog launch role.
+
+Parameters:
+  ServiceCatalogLaunchRoleName:
+    Type: String
+    Default: AWSServiceCatalogLaunchRole
+
+Resources:
+  GuardrailReadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+
+  ServiceCatalogLaunchRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref ServiceCatalogLaunchRoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: servicecatalog.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess

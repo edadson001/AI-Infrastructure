@@ -1,0 +1,15 @@
+{
+  "NamePrefix": "dev-use1-network",
+  "InspectionVpcCidr": "10.255.0.0/16",
+  "AvailabilityZoneA": "us-east-1a",
+  "AvailabilityZoneB": "us-east-1b",
+  "PublicSubnetACidr": "10.255.0.0/24",
+  "PublicSubnetBCidr": "10.255.1.0/24",
+  "FirewallSubnetACidr": "10.255.10.0/24",
+  "FirewallSubnetBCidr": "10.255.11.0/24",
+  "AttachmentSubnetACidr": "10.255.20.0/24",
+  "AttachmentSubnetBCidr": "10.255.21.0/24",
+  "TransitGatewayId": {"Fn::ImportValue":"dev-us-east-1-TransitGatewayId"},
+  "SpokeRouteTableId": {"Fn::ImportValue":"dev-us-east-1-SpokeRouteTableId"},
+  "InspectionRouteTableId": {"Fn::ImportValue":"dev-us-east-1-InspectionRouteTableId"}
+}

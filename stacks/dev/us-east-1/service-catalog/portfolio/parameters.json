@@ -1,0 +1,9 @@
+{
+  "TemplateBaseUrl": "https://example-artifacts.s3.amazonaws.com/hub-spoke-inspection-cfn",
+  "PortfolioDisplayName": "Dev Data Platform",
+  "ProviderName": "Platform Engineering",
+  "PortfolioDescription": "Approved data platform products for dev",
+  "OrganizationNodeType": "ACCOUNT",
+  "OrganizationNodeValue": "444444444444",
+  "EnvironmentTagValue": "dev"
+}

@@ -1,0 +1,174 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Service Catalog product root for an opinionated data pipeline bundle.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+  DataDomainName:
+    Type: String
+  TemplateBaseUrl:
+    Type: String
+  ExistingVpcId:
+    Type: AWS::EC2::VPC::Id
+  PrivateSubnetIds:
+    Type: CommaDelimitedList
+  WorkloadSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+  RawBucketName:
+    Type: String
+  CuratedBucketName:
+    Type: String
+  EnableScheduledTrigger:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+  GlueWorkerType:
+    Type: String
+    AllowedValues: ['G.1X', 'G.2X']
+    Default: G.1X
+  GlueNumberOfWorkers:
+    Type: Number
+    Default: 2
+  LambdaMemorySize:
+    Type: Number
+    Default: 512
+  CodeArtifactS3Uri:
+    Type: String
+  ProductKmsKeyArn:
+    Type: String
+    Default: ''
+
+Conditions:
+  CreateManagedKey: !Equals [!Ref ProductKmsKeyArn, '']
+
+Resources:
+  LoggingStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/data-platform/data-pipeline-logging.yaml'
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        DataDomainName: !Ref DataDomainName
+
+  KmsKeyStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateManagedKey
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/data-platform/kms-data-key.yaml'
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        DataDomainName: !Ref DataDomainName
+
+  IamStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: LoggingStack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/data-platform/data-pipeline-iam.yaml'
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        DataDomainName: !Ref DataDomainName
+        RawBucketName: !Ref RawBucketName
+        CuratedBucketName: !Ref CuratedBucketName
+        KmsKeyArn: !If
+          - CreateManagedKey
+          - !GetAtt KmsKeyStack.Outputs.KmsKeyArn
+          - !Ref ProductKmsKeyArn
+        LambdaLogGroupArn: !GetAtt LoggingStack.Outputs.LambdaLogGroupArn
+        GlueLogGroupArn: !GetAtt LoggingStack.Outputs.GlueLogGroupArn
+
+  BucketsStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: IamStack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/data-platform/s3-data-buckets.yaml'
+      Parameters:
+        RawBucketName: !Ref RawBucketName
+        CuratedBucketName: !Ref CuratedBucketName
+        KmsKeyArn: !If
+          - CreateManagedKey
+          - !GetAtt KmsKeyStack.Outputs.KmsKeyArn
+          - !Ref ProductKmsKeyArn
+
+  LambdaStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - IamStack
+      - BucketsStack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/data-platform/lambda-processing.yaml'
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        DataDomainName: !Ref DataDomainName
+        PrivateSubnetIds: !Join [',', !Ref PrivateSubnetIds]
+        WorkloadSecurityGroupId: !Ref WorkloadSecurityGroupId
+        LambdaExecutionRoleArn: !GetAtt IamStack.Outputs.LambdaExecutionRoleArn
+        LambdaMemorySize: !Ref LambdaMemorySize
+        CodeArtifactS3Uri: !Ref CodeArtifactS3Uri
+        RawBucketName: !Ref RawBucketName
+        CuratedBucketName: !Ref CuratedBucketName
+
+  GlueConnectionStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: IamStack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/data-platform/glue-connections.yaml'
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        DataDomainName: !Ref DataDomainName
+        ExistingVpcId: !Ref ExistingVpcId
+        PrivateSubnetIds: !Join [',', !Ref PrivateSubnetIds]
+        WorkloadSecurityGroupId: !Ref WorkloadSecurityGroupId
+
+  GlueStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - GlueConnectionStack
+      - BucketsStack
+      - IamStack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/data-platform/glue-jobs.yaml'
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        DataDomainName: !Ref DataDomainName
+        GlueExecutionRoleArn: !GetAtt IamStack.Outputs.GlueExecutionRoleArn
+        GlueConnectionName: !GetAtt GlueConnectionStack.Outputs.GlueConnectionName
+        GlueWorkerType: !Ref GlueWorkerType
+        GlueNumberOfWorkers: !Ref GlueNumberOfWorkers
+        CodeArtifactS3Uri: !Ref CodeArtifactS3Uri
+        RawBucketName: !Ref RawBucketName
+        CuratedBucketName: !Ref CuratedBucketName
+        GlueLogGroupName: !GetAtt LoggingStack.Outputs.GlueLogGroupName
+
+  EventingStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - LambdaStack
+      - GlueStack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/data-platform/eventing-and-schedules.yaml'
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        DataDomainName: !Ref DataDomainName
+        EnableScheduledTrigger: !Ref EnableScheduledTrigger
+        LambdaFunctionArn: !GetAtt LambdaStack.Outputs.LambdaFunctionArn
+        GlueJobName: !GetAtt GlueStack.Outputs.GlueJobName
+
+Outputs:
+  RawBucketName:
+    Value: !Ref RawBucketName
+  CuratedBucketName:
+    Value: !Ref CuratedBucketName
+  GlueJobName:
+    Value: !GetAtt GlueStack.Outputs.GlueJobName
+  LambdaFunctionName:
+    Value: !GetAtt LambdaStack.Outputs.LambdaFunctionName
+  ProductKmsKeyArn:
+    Value: !If
+      - CreateManagedKey
+      - !GetAtt KmsKeyStack.Outputs.KmsKeyArn
+      - !Ref ProductKmsKeyArn
+  CloudWatchLogGroupNames:
+    Value: !Join
+      - ','
+      - - !GetAtt LoggingStack.Outputs.LambdaLogGroupName
+        - !GetAtt LoggingStack.Outputs.GlueLogGroupName

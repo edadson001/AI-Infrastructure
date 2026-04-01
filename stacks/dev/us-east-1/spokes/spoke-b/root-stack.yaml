@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Reserved dev spoke-b template aligned to spoke-a for future onboarding.
+
+Parameters:
+  NamePrefix:
+    Type: String
+  SpokeVpcCidr:
+    Type: String
+  AvailabilityZoneA:
+    Type: AWS::EC2::AvailabilityZone::Name
+  AvailabilityZoneB:
+    Type: AWS::EC2::AvailabilityZone::Name
+  PrivateSubnetACidr:
+    Type: String
+  PrivateSubnetBCidr:
+    Type: String
+  AttachmentSubnetACidr:
+    Type: String
+  AttachmentSubnetBCidr:
+    Type: String
+
+Resources:
+  ReservedSpokeVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref SpokeVpcCidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${NamePrefix}-spoke-b-reserved'
+
+Outputs:
+  ReservedSpokeVpcId:
+    Value: !Ref ReservedSpokeVpc

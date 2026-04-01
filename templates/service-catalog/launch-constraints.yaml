@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Launch and template constraints for a Service Catalog product.
+
+Parameters:
+  PortfolioId:
+    Type: String
+  ProductId:
+    Type: String
+  LaunchRoleArn:
+    Type: String
+  TemplateConstraintRules:
+    Type: String
+    Default: '{}'
+
+Resources:
+  LaunchConstraint:
+    Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    Properties:
+      PortfolioId: !Ref PortfolioId
+      ProductId: !Ref ProductId
+      RoleArn: !Ref LaunchRoleArn
+      Description: Launch role for the product
+
+  TemplateConstraint:
+    Type: AWS::ServiceCatalog::LaunchTemplateConstraint
+    Properties:
+      PortfolioId: !Ref PortfolioId
+      ProductId: !Ref ProductId
+      Rules: !Ref TemplateConstraintRules
+      Description: Restrict product parameter values

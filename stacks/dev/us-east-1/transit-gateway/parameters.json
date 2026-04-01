@@ -1,0 +1,8 @@
+{
+  "NamePrefix": "dev-use1-network",
+  "AmazonSideAsn": 64512,
+  "SpokeAccountIds": [
+    "444444444444",
+    "555555555555"
+  ]
+}

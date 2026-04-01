@@ -1,0 +1,6 @@
+[
+  {"Key":"Environment","Value":"dev"},
+  {"Key":"Region","Value":"us-east-1"},
+  {"Key":"Spoke","Value":"spoke-a"},
+  {"Key":"ManagedBy","Value":"platform-team"}
+]

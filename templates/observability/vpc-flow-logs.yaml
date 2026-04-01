@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: VPC Flow Logs destination skeleton.
+
+Parameters:
+  VpcId:
+    Type: String
+  LogGroupName:
+    Type: String
+  DeliverLogsRoleArn:
+    Type: String
+
+Resources:
+  VpcFlowLogs:
+    Type: AWS::EC2::FlowLog
+    Properties:
+      ResourceId: !Ref VpcId
+      ResourceType: VPC
+      TrafficType: ALL
+      LogDestinationType: cloud-watch-logs
+      LogGroupName: !Ref LogGroupName
+      DeliverLogsPermissionArn: !Ref DeliverLogsRoleArn

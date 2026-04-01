@@ -1,0 +1,4 @@
+{
+  "Region": "us-west-2",
+  "AvailabilityZones": ["us-west-2a", "us-west-2b"]
+}

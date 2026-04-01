@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Central Service Catalog portfolio for approved platform products.
+
+Parameters:
+  PortfolioDisplayName:
+    Type: String
+  ProviderName:
+    Type: String
+  PortfolioDescription:
+    Type: String
+
+Resources:
+  Portfolio:
+    Type: AWS::ServiceCatalog::Portfolio
+    Properties:
+      DisplayName: !Ref PortfolioDisplayName
+      ProviderName: !Ref ProviderName
+      Description: !Ref PortfolioDescription
+      Tags:
+        - Key: ManagedBy
+          Value: platform-team
+
+Outputs:
+  PortfolioId:
+    Value: !Ref Portfolio

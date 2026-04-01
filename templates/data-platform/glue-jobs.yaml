@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Glue job for the data pipeline product.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+  DataDomainName:
+    Type: String
+  GlueExecutionRoleArn:
+    Type: String
+  GlueConnectionName:
+    Type: String
+  GlueWorkerType:
+    Type: String
+  GlueNumberOfWorkers:
+    Type: Number
+  CodeArtifactS3Uri:
+    Type: String
+  RawBucketName:
+    Type: String
+  CuratedBucketName:
+    Type: String
+  GlueLogGroupName:
+    Type: String
+
+Resources:
+  GlueJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub '${EnvironmentName}-${DataDomainName}-glue-job'
+      Role: !Ref GlueExecutionRoleArn
+      GlueVersion: '4.0'
+      WorkerType: !Ref GlueWorkerType
+      NumberOfWorkers: !Ref GlueNumberOfWorkers
+      Command:
+        Name: glueetl
+        PythonVersion: '3'
+        ScriptLocation: !Ref CodeArtifactS3Uri
+      DefaultArguments:
+        '--raw_bucket': !Ref RawBucketName
+        '--curated_bucket': !Ref CuratedBucketName
+        '--continuous-log-logGroup': !Ref GlueLogGroupName
+      Connections:
+        Connections:
+          - !Ref GlueConnectionName
+
+Outputs:
+  GlueJobName:
+    Value: !Ref GlueJob

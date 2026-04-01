@@ -1,0 +1,261 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Runnable dev spoke-a stack with TGW attachment, routing, endpoints, and validation target.
+
+Parameters:
+  NamePrefix:
+    Type: String
+  SpokeVpcCidr:
+    Type: String
+  AvailabilityZoneA:
+    Type: AWS::EC2::AvailabilityZone::Name
+  AvailabilityZoneB:
+    Type: AWS::EC2::AvailabilityZone::Name
+  PrivateSubnetACidr:
+    Type: String
+  PrivateSubnetBCidr:
+    Type: String
+  AttachmentSubnetACidr:
+    Type: String
+  AttachmentSubnetBCidr:
+    Type: String
+  TransitGatewayId:
+    Type: String
+  SpokeRouteTableId:
+    Type: String
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+Resources:
+  SpokeVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref SpokeVpcCidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${NamePrefix}-spoke-a'
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref SpokeVpc
+      AvailabilityZone: !Ref AvailabilityZoneA
+      CidrBlock: !Ref PrivateSubnetACidr
+      MapPublicIpOnLaunch: false
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref SpokeVpc
+      AvailabilityZone: !Ref AvailabilityZoneB
+      CidrBlock: !Ref PrivateSubnetBCidr
+      MapPublicIpOnLaunch: false
+
+  AttachmentSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref SpokeVpc
+      AvailabilityZone: !Ref AvailabilityZoneA
+      CidrBlock: !Ref AttachmentSubnetACidr
+      MapPublicIpOnLaunch: false
+
+  AttachmentSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref SpokeVpc
+      AvailabilityZone: !Ref AvailabilityZoneB
+      CidrBlock: !Ref AttachmentSubnetBCidr
+      MapPublicIpOnLaunch: false
+
+  PrivateRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref SpokeVpc
+
+  PrivateRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref SpokeVpc
+
+  AttachmentRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref SpokeVpc
+
+  PrivateAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableA
+      SubnetId: !Ref PrivateSubnetA
+
+  PrivateAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableB
+      SubnetId: !Ref PrivateSubnetB
+
+  AttachmentAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref AttachmentRouteTable
+      SubnetId: !Ref AttachmentSubnetA
+
+  AttachmentAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref AttachmentRouteTable
+      SubnetId: !Ref AttachmentSubnetB
+
+  WorkloadSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Workload security group for spoke-a
+      VpcId: !Ref SpokeVpc
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
+  EndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTPS to interface endpoints
+      VpcId: !Ref SpokeVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref SpokeVpcCidr
+
+  SsmEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ssm'
+      VpcId: !Ref SpokeVpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+
+  SsmMessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ssmmessages'
+      VpcId: !Ref SpokeVpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+
+  Ec2MessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ec2messages'
+      VpcId: !Ref SpokeVpc
+      VpcEndpointType: Interface
+      PrivateDnsEnabled: true
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+
+  TransitGatewayAttachment:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGatewayId
+      VpcId: !Ref SpokeVpc
+      SubnetIds:
+        - !Ref AttachmentSubnetA
+        - !Ref AttachmentSubnetB
+      Options:
+        DnsSupport: enable
+
+  AssociateAttachmentToSpokeTable:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties:
+      TransitGatewayAttachmentId: !Ref TransitGatewayAttachment
+      TransitGatewayRouteTableId: !Ref SpokeRouteTableId
+
+  PropagateAttachmentToSpokeTable:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties:
+      TransitGatewayAttachmentId: !Ref TransitGatewayAttachment
+      TransitGatewayRouteTableId: !Ref SpokeRouteTableId
+
+  PrivateDefaultRouteA:
+    Type: AWS::EC2::Route
+    DependsOn: TransitGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableA
+      DestinationCidrBlock: 0.0.0.0/0
+      TransitGatewayId: !Ref TransitGatewayId
+
+  PrivateDefaultRouteB:
+    Type: AWS::EC2::Route
+    DependsOn: TransitGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableB
+      DestinationCidrBlock: 0.0.0.0/0
+      TransitGatewayId: !Ref TransitGatewayId
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref InstanceRole
+
+  ValidationInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: t3.micro
+      IamInstanceProfile: !Ref InstanceProfile
+      SecurityGroupIds:
+        - !Ref WorkloadSecurityGroup
+      SubnetId: !Ref PrivateSubnetA
+      Tags:
+        - Key: Name
+          Value: !Sub '${NamePrefix}-spoke-a-validation'
+
+Outputs:
+  SpokeVpcId:
+    Value: !Ref SpokeVpc
+    Export:
+      Name: dev-us-east-1-SpokeAVpcId
+  PrivateSubnetIds:
+    Value: !Join [',', [!Ref PrivateSubnetA, !Ref PrivateSubnetB]]
+    Export:
+      Name: dev-us-east-1-SpokeAPrivateSubnetIds
+  WorkloadSecurityGroupId:
+    Value: !Ref WorkloadSecurityGroup
+    Export:
+      Name: dev-us-east-1-SpokeAWorkloadSecurityGroupId
+  TransitGatewayAttachmentId:
+    Value: !Ref TransitGatewayAttachment
+    Export:
+      Name: dev-us-east-1-SpokeAAttachmentId
+  ValidationInstanceId:
+    Value: !Ref ValidationInstance
+    Export:
+      Name: dev-us-east-1-SpokeAValidationInstanceId

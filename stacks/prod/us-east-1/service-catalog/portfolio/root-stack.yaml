@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Prod Service Catalog portfolio stack.
+
+Parameters:
+  TemplateBaseUrl:
+    Type: String
+  PortfolioDisplayName:
+    Type: String
+  ProviderName:
+    Type: String
+  PortfolioDescription:
+    Type: String
+  OrganizationNodeType:
+    Type: String
+  OrganizationNodeValue:
+    Type: String
+  EnvironmentTagValue:
+    Type: String
+    Default: prod
+
+Resources:
+  PortfolioStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/service-catalog/portfolio.yaml'
+      Parameters:
+        PortfolioDisplayName: !Ref PortfolioDisplayName
+        ProviderName: !Ref ProviderName
+        PortfolioDescription: !Ref PortfolioDescription

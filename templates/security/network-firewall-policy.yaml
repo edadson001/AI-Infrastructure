@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Network Firewall policy skeleton for centralized inspection.
+
+Parameters:
+  PolicyName:
+    Type: String
+
+Resources:
+  FirewallPolicy:
+    Type: AWS::NetworkFirewall::FirewallPolicy
+    Properties:
+      FirewallPolicyName: !Ref PolicyName
+      FirewallPolicy:
+        StatelessDefaultActions:
+          - aws:forward_to_sfe
+        StatelessFragmentDefaultActions:
+          - aws:forward_to_sfe
+        StatefulDefaultActions:
+          - aws:drop_established
+
+Outputs:
+  FirewallPolicyArn:
+    Value: !Ref FirewallPolicy

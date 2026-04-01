@@ -1,0 +1,5 @@
+{
+  "dev": ["data-platform-users", "analytics-engineers"],
+  "test": ["data-platform-users"],
+  "prod": ["data-platform-users", "data-platform-approvers"]
+}

@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Root inspection VPC pattern for centralized firewall and egress services.
+
+Parameters:
+  NamePrefix:
+    Type: String
+  InspectionVpcCidr:
+    Type: String
+
+Resources:
+  InspectionVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref InspectionVpcCidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${NamePrefix}-inspection-vpc'
+
+Outputs:
+  InspectionVpcId:
+    Value: !Ref InspectionVpc

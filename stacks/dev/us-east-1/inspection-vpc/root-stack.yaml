@@ -1,0 +1,269 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Runnable dev inspection VPC with public, firewall, and TGW attachment subnet tiers.
+
+Parameters:
+  NamePrefix:
+    Type: String
+  InspectionVpcCidr:
+    Type: String
+  AvailabilityZoneA:
+    Type: AWS::EC2::AvailabilityZone::Name
+  AvailabilityZoneB:
+    Type: AWS::EC2::AvailabilityZone::Name
+  PublicSubnetACidr:
+    Type: String
+  PublicSubnetBCidr:
+    Type: String
+  FirewallSubnetACidr:
+    Type: String
+  FirewallSubnetBCidr:
+    Type: String
+  AttachmentSubnetACidr:
+    Type: String
+  AttachmentSubnetBCidr:
+    Type: String
+  TransitGatewayId:
+    Type: String
+  SpokeRouteTableId:
+    Type: String
+  InspectionRouteTableId:
+    Type: String
+
+Resources:
+  InspectionVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref InspectionVpcCidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${NamePrefix}-inspection-vpc'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref InspectionVpc
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref InspectionVpc
+      AvailabilityZone: !Ref AvailabilityZoneA
+      CidrBlock: !Ref PublicSubnetACidr
+      MapPublicIpOnLaunch: false
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref InspectionVpc
+      AvailabilityZone: !Ref AvailabilityZoneB
+      CidrBlock: !Ref PublicSubnetBCidr
+      MapPublicIpOnLaunch: false
+
+  FirewallSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref InspectionVpc
+      AvailabilityZone: !Ref AvailabilityZoneA
+      CidrBlock: !Ref FirewallSubnetACidr
+      MapPublicIpOnLaunch: false
+
+  FirewallSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref InspectionVpc
+      AvailabilityZone: !Ref AvailabilityZoneB
+      CidrBlock: !Ref FirewallSubnetBCidr
+      MapPublicIpOnLaunch: false
+
+  AttachmentSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref InspectionVpc
+      AvailabilityZone: !Ref AvailabilityZoneA
+      CidrBlock: !Ref AttachmentSubnetACidr
+      MapPublicIpOnLaunch: false
+
+  AttachmentSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref InspectionVpc
+      AvailabilityZone: !Ref AvailabilityZoneB
+      CidrBlock: !Ref AttachmentSubnetBCidr
+      MapPublicIpOnLaunch: false
+
+  PublicRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref InspectionVpc
+
+  PublicRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref InspectionVpc
+
+  FirewallRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref InspectionVpc
+
+  FirewallRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref InspectionVpc
+
+  AttachmentRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref InspectionVpc
+
+  AttachmentRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref InspectionVpc
+
+  PublicAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTableA
+      SubnetId: !Ref PublicSubnetA
+
+  PublicAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTableB
+      SubnetId: !Ref PublicSubnetB
+
+  FirewallAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FirewallRouteTableA
+      SubnetId: !Ref FirewallSubnetA
+
+  FirewallAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref FirewallRouteTableB
+      SubnetId: !Ref FirewallSubnetB
+
+  AttachmentAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref AttachmentRouteTableA
+      SubnetId: !Ref AttachmentSubnetA
+
+  AttachmentAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref AttachmentRouteTableB
+      SubnetId: !Ref AttachmentSubnetB
+
+  PublicDefaultRouteA:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTableA
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicDefaultRouteB:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTableB
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  NatEipA:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatEipB:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatGatewayA:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEipA.AllocationId
+      SubnetId: !Ref PublicSubnetA
+
+  NatGatewayB:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEipB.AllocationId
+      SubnetId: !Ref PublicSubnetB
+
+  InspectionAttachment:
+    Type: AWS::EC2::TransitGatewayVpcAttachment
+    Properties:
+      TransitGatewayId: !Ref TransitGatewayId
+      VpcId: !Ref InspectionVpc
+      SubnetIds:
+        - !Ref AttachmentSubnetA
+        - !Ref AttachmentSubnetB
+      Options:
+        ApplianceModeSupport: enable
+        DnsSupport: enable
+
+  AssociateToInspectionRouteTable:
+    Type: AWS::EC2::TransitGatewayRouteTableAssociation
+    Properties:
+      TransitGatewayAttachmentId: !Ref InspectionAttachment
+      TransitGatewayRouteTableId: !Ref InspectionRouteTableId
+
+  PropagateToSpokeRouteTable:
+    Type: AWS::EC2::TransitGatewayRouteTablePropagation
+    Properties:
+      TransitGatewayAttachmentId: !Ref InspectionAttachment
+      TransitGatewayRouteTableId: !Ref SpokeRouteTableId
+
+  SpokeDefaultRouteToInspection:
+    Type: AWS::EC2::TransitGatewayRoute
+    Properties:
+      TransitGatewayRouteTableId: !Ref SpokeRouteTableId
+      DestinationCidrBlock: 0.0.0.0/0
+      TransitGatewayAttachmentId: !Ref InspectionAttachment
+
+Outputs:
+  InspectionVpcId:
+    Value: !Ref InspectionVpc
+    Export:
+      Name: dev-us-east-1-InspectionVpcId
+  FirewallSubnetAId:
+    Value: !Ref FirewallSubnetA
+    Export:
+      Name: dev-us-east-1-FirewallSubnetAId
+  FirewallSubnetBId:
+    Value: !Ref FirewallSubnetB
+    Export:
+      Name: dev-us-east-1-FirewallSubnetBId
+  AttachmentSubnetAId:
+    Value: !Ref AttachmentSubnetA
+    Export:
+      Name: dev-us-east-1-AttachmentSubnetAId
+  AttachmentSubnetBId:
+    Value: !Ref AttachmentSubnetB
+    Export:
+      Name: dev-us-east-1-AttachmentSubnetBId
+  InspectionAttachmentId:
+    Value: !Ref InspectionAttachment
+    Export:
+      Name: dev-us-east-1-InspectionAttachmentId
+  NatGatewayAId:
+    Value: !Ref NatGatewayA
+    Export:
+      Name: dev-us-east-1-NatGatewayAId
+  NatGatewayBId:
+    Value: !Ref NatGatewayB
+    Export:
+      Name: dev-us-east-1-NatGatewayBId

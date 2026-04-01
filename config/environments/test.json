@@ -1,0 +1,5 @@
+{
+  "EnvironmentName": "test",
+  "PrimaryRegion": "us-east-1",
+  "InspectionMode": "centralized-egress"
+}

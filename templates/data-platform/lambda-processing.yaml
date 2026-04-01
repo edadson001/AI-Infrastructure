@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda processing function for the data pipeline product.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+  DataDomainName:
+    Type: String
+  PrivateSubnetIds:
+    Type: CommaDelimitedList
+  WorkloadSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+  LambdaExecutionRoleArn:
+    Type: String
+  LambdaMemorySize:
+    Type: Number
+  CodeArtifactS3Uri:
+    Type: String
+  RawBucketName:
+    Type: String
+  CuratedBucketName:
+    Type: String
+
+Resources:
+  ProcessingFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${EnvironmentName}-${DataDomainName}-processor'
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !Ref LambdaExecutionRoleArn
+      MemorySize: !Ref LambdaMemorySize
+      Timeout: 300
+      Code:
+        ZipFile: |
+          import json
+          def handler(event, context):
+              return {
+                  "statusCode": 200,
+                  "body": json.dumps({"message": "data-pipeline-starter", "event": event})
+              }
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref WorkloadSecurityGroupId
+        SubnetIds: !Ref PrivateSubnetIds
+      Environment:
+        Variables:
+          RAW_BUCKET: !Ref RawBucketName
+          CURATED_BUCKET: !Ref CuratedBucketName
+          CODE_ARTIFACT_URI: !Ref CodeArtifactS3Uri
+
+Outputs:
+  LambdaFunctionName:
+    Value: !Ref ProcessingFunction
+  LambdaFunctionArn:
+    Value: !GetAtt ProcessingFunction.Arn

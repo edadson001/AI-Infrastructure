@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation-backed Service Catalog product registration.
+
+Parameters:
+  PortfolioId:
+    Type: String
+  ProductName:
+    Type: String
+  Owner:
+    Type: String
+  ProductDescription:
+    Type: String
+  SupportEmail:
+    Type: String
+  SupportUrl:
+    Type: String
+  ArtifactTemplateUrl:
+    Type: String
+  ArtifactVersionName:
+    Type: String
+  ArtifactDescription:
+    Type: String
+
+Resources:
+  Product:
+    Type: AWS::ServiceCatalog::CloudFormationProduct
+    Properties:
+      Name: !Ref ProductName
+      Owner: !Ref Owner
+      Description: !Ref ProductDescription
+      SupportEmail: !Ref SupportEmail
+      SupportUrl: !Ref SupportUrl
+      ProvisioningArtifactParameters:
+        - Name: !Ref ArtifactVersionName
+          Description: !Ref ArtifactDescription
+          Info:
+            LoadTemplateFromURL: !Ref ArtifactTemplateUrl
+
+  PortfolioAssociation:
+    Type: AWS::ServiceCatalog::PortfolioProductAssociation
+    Properties:
+      PortfolioId: !Ref PortfolioId
+      ProductId: !Ref Product
+
+Outputs:
+  ProductId:
+    Value: !Ref Product

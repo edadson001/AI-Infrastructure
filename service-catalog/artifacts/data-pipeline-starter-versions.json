@@ -1,0 +1,10 @@
+{
+  "ProductName": "data-pipeline-starter",
+  "Versions": [
+    {
+      "Version": "v1.0.0",
+      "TemplatePath": "templates/service-catalog/data-pipeline-root.yaml",
+      "Description": "Initial Glue Lambda S3 starter bundle."
+    }
+  ]
+}

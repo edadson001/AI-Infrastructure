@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Test product registration stack for data-pipeline-starter.
+
+Parameters:
+  TemplateBaseUrl:
+    Type: String
+  PortfolioId:
+    Type: String
+  ProductTemplateUrl:
+    Type: String
+  LaunchRoleArn:
+    Type: String
+  TemplateConstraintRules:
+    Type: String
+  ProductVersionName:
+    Type: String
+
+Resources:
+  ProductStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub '${TemplateBaseUrl}/templates/service-catalog/product.yaml'
+      Parameters:
+        PortfolioId: !Ref PortfolioId
+        ProductName: data-pipeline-starter
+        Owner: Platform Engineering
+        ProductDescription: Opinionated Glue Lambda and S3 data pipeline starter
+        SupportEmail: platform@example.com
+        SupportUrl: https://example.com/platform/data-pipeline-starter
+        ArtifactTemplateUrl: !Ref ProductTemplateUrl
+        ArtifactVersionName: !Ref ProductVersionName
+        ArtifactDescription: Test data pipeline bundle

@@ -1,0 +1,8 @@
+{
+  "TemplateBaseUrl": "https://example-artifacts.s3.amazonaws.com/hub-spoke-inspection-cfn",
+  "PortfolioId": "port-zzzzzzzzzzzz",
+  "ProductTemplateUrl": "https://example-artifacts.s3.amazonaws.com/hub-spoke-inspection-cfn/templates/service-catalog/data-pipeline-root.yaml",
+  "LaunchRoleArn": "arn:aws:iam::333333333333:role/AWSServiceCatalogLaunchRole",
+  "TemplateConstraintRules": "{\"Rules\":{\"GlueWorkerType\":{\"Assertions\":[{\"Assert\":{\"Fn::Contains\":[[\"G.1X\",\"G.2X\"],{\"Ref\":\"GlueWorkerType\"}]},\"AssertDescription\":\"Glue worker type must be approved.\"}]}}}",
+  "ProductVersionName": "v1.0.0"
+}

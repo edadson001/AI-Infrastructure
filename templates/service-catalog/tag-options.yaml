@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Tag options for standardized metadata in Service Catalog.
+
+Parameters:
+  PortfolioId:
+    Type: String
+  EnvironmentValue:
+    Type: String
+
+Resources:
+  EnvironmentTagOption:
+    Type: AWS::ServiceCatalog::TagOption
+    Properties:
+      Key: Environment
+      Value: !Ref EnvironmentValue
+      Active: true
+
+  EnvironmentTagAssociation:
+    Type: AWS::ServiceCatalog::TagOptionAssociation
+    Properties:
+      ResourceId: !Ref PortfolioId
+      TagOptionId: !Ref EnvironmentTagOption

@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Root spoke VPC pattern composed from network and endpoint building blocks.
+
+Parameters:
+  NamePrefix:
+    Type: String
+  VpcCidr:
+    Type: String
+
+Resources:
+  SpokeVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${NamePrefix}-vpc'
+
+Outputs:
+  VpcId:
+    Value: !Ref SpokeVpc

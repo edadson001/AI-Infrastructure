@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Validation resources for the dev spoke-a network and Service Catalog path.
+
+Parameters:
+  NamePrefix:
+    Type: String
+  AlertsTopicArn:
+    Type: String
+  ValidationInstanceId:
+    Type: String
+  SpokeVpcId:
+    Type: String
+
+Resources:
+  ValidationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${NamePrefix}-validation'
+
+  ValidationParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${NamePrefix}/validation/spoke-a'
+      Type: String
+      Value: !Sub 'Instance=${ValidationInstanceId},Vpc=${SpokeVpcId},Alerts=${AlertsTopicArn}'
+
+Outputs:
+  ValidationTopicArn:
+    Value: !Ref ValidationTopic
+  ValidationParameterName:
+    Value: !Ref ValidationParameter

@@ -1,0 +1,7 @@
+{
+  "data-pipeline-starter": {
+    "dev": "v1.0.0",
+    "test": "v1.0.0",
+    "prod": "v1.0.0"
+  }
+}

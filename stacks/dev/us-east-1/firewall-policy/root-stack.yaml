@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Runnable dev firewall policy and deployment for the inspection VPC.
+
+Parameters:
+  PolicyName:
+    Type: String
+  InspectionVpcId:
+    Type: String
+  FirewallSubnetAId:
+    Type: String
+  FirewallSubnetBId:
+    Type: String
+
+Resources:
+  AllowAwsApisRuleGroup:
+    Type: AWS::NetworkFirewall::RuleGroup
+    Properties:
+      Capacity: 100
+      RuleGroupName: !Sub '${PolicyName}-stateful'
+      Type: STATEFUL
+      RuleGroup:
+        RulesSource:
+          RulesString: |
+            pass tcp any any -> any 443 (msg:"allow-https"; sid:1;)
+
+  FirewallPolicy:
+    Type: AWS::NetworkFirewall::FirewallPolicy
+    Properties:
+      FirewallPolicyName: !Ref PolicyName
+      FirewallPolicy:
+        StatelessDefaultActions:
+          - aws:forward_to_sfe
+        StatelessFragmentDefaultActions:
+          - aws:forward_to_sfe
+        StatefulRuleGroupReferences:
+          - ResourceArn: !Ref AllowAwsApisRuleGroup
+
+  InspectionFirewall:
+    Type: AWS::NetworkFirewall::Firewall
+    Properties:
+      FirewallName: !Sub '${PolicyName}-deployment'
+      FirewallPolicyArn: !Ref FirewallPolicy
+      VpcId: !Ref InspectionVpcId
+      DeleteProtection: false
+      FirewallPolicyChangeProtection: false
+      SubnetChangeProtection: false
+      SubnetMappings:
+        - SubnetId: !Ref FirewallSubnetAId
+        - SubnetId: !Ref FirewallSubnetBId
+
+Outputs:
+  FirewallPolicyArn:
+    Value: !Ref FirewallPolicy
+    Export:
+      Name: dev-us-east-1-FirewallPolicyArn
+  FirewallArn:
+    Value: !Ref InspectionFirewall
+    Export:
+      Name: dev-us-east-1-FirewallArn

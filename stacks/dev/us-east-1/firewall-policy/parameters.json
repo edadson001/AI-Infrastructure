@@ -1,0 +1,6 @@
+{
+  "PolicyName": "dev-use1-inspection",
+  "InspectionVpcId": {"Fn::ImportValue":"dev-us-east-1-InspectionVpcId"},
+  "FirewallSubnetAId": {"Fn::ImportValue":"dev-us-east-1-FirewallSubnetAId"},
+  "FirewallSubnetBId": {"Fn::ImportValue":"dev-us-east-1-FirewallSubnetBId"}
+}

@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Optional schedule wiring for the data pipeline product.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+  DataDomainName:
+    Type: String
+  EnableScheduledTrigger:
+    Type: String
+    AllowedValues: ['true', 'false']
+  LambdaFunctionArn:
+    Type: String
+  GlueJobName:
+    Type: String
+
+Conditions:
+  CreateSchedule: !Equals [!Ref EnableScheduledTrigger, 'true']
+
+Resources:
+  PipelineSchedule:
+    Type: AWS::Events::Rule
+    Condition: CreateSchedule
+    Properties:
+      Name: !Sub '${EnvironmentName}-${DataDomainName}-daily-trigger'
+      ScheduleExpression: rate(1 day)
+      Targets:
+        - Arn: !Ref LambdaFunctionArn
+          Id: lambda-target
+
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Condition: CreateSchedule
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref LambdaFunctionArn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt PipelineSchedule.Arn

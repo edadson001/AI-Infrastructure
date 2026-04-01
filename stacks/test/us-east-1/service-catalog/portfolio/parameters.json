@@ -1,0 +1,9 @@
+{
+  "TemplateBaseUrl": "https://example-artifacts.s3.amazonaws.com/hub-spoke-inspection-cfn",
+  "PortfolioDisplayName": "Test Data Platform",
+  "ProviderName": "Platform Engineering",
+  "PortfolioDescription": "Approved data platform products for test",
+  "OrganizationNodeType": "ORGANIZATIONAL_UNIT",
+  "OrganizationNodeValue": "ou-example-test",
+  "EnvironmentTagValue": "test"
+}

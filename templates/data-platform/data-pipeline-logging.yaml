@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudWatch Logs groups for the data pipeline product.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+  DataDomainName:
+    Type: String
+
+Resources:
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/data-pipeline/${EnvironmentName}/${DataDomainName}/lambda'
+      RetentionInDays: 30
+
+  GlueLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/data-pipeline/${EnvironmentName}/${DataDomainName}/glue'
+      RetentionInDays: 30
+
+Outputs:
+  LambdaLogGroupName:
+    Value: !Ref LambdaLogGroup
+  LambdaLogGroupArn:
+    Value: !GetAtt LambdaLogGroup.Arn
+  GlueLogGroupName:
+    Value: !Ref GlueLogGroup
+  GlueLogGroupArn:
+    Value: !GetAtt GlueLogGroup.Arn

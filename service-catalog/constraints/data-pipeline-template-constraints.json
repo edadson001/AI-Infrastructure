@@ -1,0 +1,17 @@
+{
+  "Rules": {
+    "GlueWorkerType": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Contains": [
+              ["G.1X", "G.2X"],
+              {"Ref": "GlueWorkerType"}
+            ]
+          },
+          "AssertDescription": "Glue worker type must be G.1X or G.2X."
+        }
+      ]
+    }
+  }
+}

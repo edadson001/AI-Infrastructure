@@ -1,0 +1,6 @@
+{
+  "NamePrefix": "dev-use1-spoke-a",
+  "AlertsTopicArn": {"Fn::ImportValue":"dev-us-east-1-AlertsTopicArn"},
+  "ValidationInstanceId": {"Fn::ImportValue":"dev-us-east-1-SpokeAValidationInstanceId"},
+  "SpokeVpcId": {"Fn::ImportValue":"dev-us-east-1-SpokeAVpcId"}
+}
