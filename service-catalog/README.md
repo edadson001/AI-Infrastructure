@@ -1,15 +1,20 @@
-# Service Catalog
+# service-catalog
 
-This directory contains the metadata, constraint definitions, and artifact manifests for centrally published AWS Service Catalog products.
+## Purpose
 
-## Initial product
+Stores the metadata and publishing-side definitions for centrally managed AWS Service Catalog products.
 
-`data-pipeline-starter` is an opinionated Glue + Lambda + S3 bundle intended for application teams deploying into existing spoke VPCs.
+## Contains
 
-## Flow
+- `artifacts/`: product version manifests
+- `constraints/`: launch-role and template-constraint definitions
+- `portfolios/`: portfolio ownership and sharing notes
+- `products/`: product-specific documentation, starting with `data-pipeline-starter`
 
-1. Package product templates to S3.
-2. Deploy the portfolio stack in the shared-services account.
-3. Register or update the product and provisioning artifact.
-4. Apply launch constraints and portfolio sharing.
-5. Promote versions from `dev` to `test` to `prod`.
+## How It Is Used
+
+Use this directory when publishing, versioning, or governing self-service products from the shared-services account.
+
+## Notes
+
+The actual CloudFormation templates for Service Catalog live under `templates/service-catalog/`, while environment deployments live under `stacks/<env>/<region>/service-catalog/`.
